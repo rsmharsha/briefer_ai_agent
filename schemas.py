@@ -62,6 +62,11 @@ class ArticleCandidate(BaseModel):
         )
     )
 
+class FetchedArticle(ArticleCandidate):
+    content: str = Field(
+        description="The main article text extracted from the source page."
+    )
+
 
 class NewsSearchResults(BaseModel):
     articles: list[ArticleCandidate] = Field(

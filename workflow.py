@@ -7,12 +7,18 @@ from agent_definitions import (
     planner_agent,
     news_search_agent,
 )
-from schemas import UserProfile, SearchPlan, NewsSearchResults
+from article_fetcher import fetch_articles
+from schemas import (
+    UserProfile,
+    SearchPlan,
+    NewsSearchResults,
+    FetchedArticle,
+)
 
 
 async def run_workflow(
     user_description: str,
-) -> tuple[UserProfile, SearchPlan, NewsSearchResults]:
+) -> tuple[UserProfile, SearchPlan, NewsSearchResults, list[FetchedArticle]]:
 
     # 1. Create the user profile.
     profiler_result = await Runner.run(
@@ -53,4 +59,7 @@ async def run_workflow(
 
         search_results = search_result.final_output
 
-    return profile, search_plan, search_results
+    # 4. Download and extract the article text.
+    fetched_articles = await fetch_articles(search_results.articles)
+
+    return profile, search_plan, search_results, fetched_articles

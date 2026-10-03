@@ -8,7 +8,7 @@ async def main() -> None:
         "Describe your newsletter preferences: "
     )
 
-    profile, search_plan, search_results, fetched_articles, article_summaries = await run_workflow(user_description)
+    profile, search_plan, search_results, fetched_articles, article_summaries, newsletter = await run_workflow(user_description)
 
     print("\nUSER PROFILE:")
     print(profile.model_dump_json(indent=2))
@@ -36,6 +36,13 @@ async def main() -> None:
     print(f"\nARTICLE SUMMARIES: {len(article_summaries)}")
     for article_summary in article_summaries:
         print(article_summary.model_dump_json(indent=2))
+
+    print("\nNEWSLETTER DRAFT:")
+
+    if newsletter is None:
+        print("No usable article summaries were available.")
+    else:
+        print(newsletter.model_dump_json(indent=2))
 
 
 if __name__ == "__main__":

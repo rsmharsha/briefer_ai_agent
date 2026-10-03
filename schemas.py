@@ -101,3 +101,42 @@ class ArticleSummary(BaseModel):
     key_points: list[str] = Field(
         description="Two to three important points supported by the article."
     )
+
+
+class NewsletterSection(BaseModel):
+    heading: str = Field(
+        description="A clear section heading suited to the user's interests."
+    )
+
+    body: str = Field(
+        description=(
+            "The section text, based on the supplied article summaries "
+            "and suited to the user's technical level and preferred tone."
+        )
+    )
+
+    source_urls: list[str] = Field(
+        description=(
+            "The exact URLs of supplied articles supporting this section."
+        )
+    )
+
+
+class Newsletter(BaseModel):
+    title: str = Field(
+        description="A clear title for the personalized newsletter."
+    )
+
+    date: str = Field(
+        description="The supplied current date in YYYY-MM-DD format."
+    )
+
+    introduction: str = Field(
+        description="A brief introduction to the topics covered."
+    )
+
+    sections: list[NewsletterSection] = Field(
+        description="Newsletter sections organized by topic."
+    )
+
+

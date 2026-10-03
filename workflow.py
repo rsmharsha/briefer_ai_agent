@@ -1,4 +1,5 @@
 from datetime import date
+import json
 
 from agents import Runner
 
@@ -7,6 +8,7 @@ from agent_definitions import (
     planner_agent,
     news_search_agent,
     summarization_agent,
+    newsletter_writer_agent
 )
 from article_fetcher import fetch_articles
 from schemas import (
@@ -15,6 +17,7 @@ from schemas import (
     NewsSearchResults,
     FetchedArticle,
     ArticleSummary,
+    Newsletter
 )
 
 
@@ -26,6 +29,7 @@ async def run_workflow(
     NewsSearchResults,
     list[FetchedArticle],
     list[ArticleSummary],
+    Newsletter | None,
 ]:
     # 1. Create the user profile.
     profiler_result = await Runner.run(
@@ -83,10 +87,41 @@ async def run_workflow(
         article_summary: ArticleSummary = summary_result.final_output
         article_summaries.append(article_summary)
 
+        # 6. Write the newsletter from usable summaries.
+    usable_summaries = [
+        summary
+        for summary in article_summaries
+        if summary.key_points
+    ]
+
+    newsletter: Newsletter | None = None
+
+    if usable_summaries:
+        writer_input = json.dumps(
+            {
+                "current_date": today,
+                "user_profile": profile.model_dump(),
+                "search_plan": search_plan.model_dump(),
+                "article_summaries": [
+                    summary.model_dump()
+                    for summary in usable_summaries
+                ],
+            },
+            ensure_ascii=False,
+        )
+
+        writer_result = await Runner.run(
+            newsletter_writer_agent,
+            input=writer_input,
+        )
+
+        newsletter = writer_result.final_output
+
     return (
         profile,
         search_plan,
         search_results,
         fetched_articles,
         article_summaries,
+        newsletter
     )

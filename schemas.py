@@ -62,6 +62,7 @@ class ArticleCandidate(BaseModel):
         )
     )
 
+
 class FetchedArticle(ArticleCandidate):
     content: str = Field(
         description="The main article text extracted from the source page."
@@ -74,4 +75,29 @@ class NewsSearchResults(BaseModel):
             "Unique, relevant article candidates found through web search. "
             "Return an empty list if no suitable articles are found."
         )
+    )
+
+
+class ArticleSummary(BaseModel):
+    title: str = Field(
+        description="The exact source article title."
+    )
+
+    url: str = Field(
+        description="The exact source article URL."
+    )
+
+    published_date: str | None = Field(
+        description="The supplied publication date, or null if unknown."
+    )
+
+    summary: str = Field(
+        description=(
+            "A concise, factual summary suited to the user's "
+            "technical level and preferred tone."
+        )
+    )
+
+    key_points: list[str] = Field(
+        description="Two to three important points supported by the article."
     )

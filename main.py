@@ -1,6 +1,6 @@
 import asyncio
 from workflow import run_workflow
-from verification_utils import validate_evidence
+from newsletter_export import save_newsletter
 
 
 async def main() -> None:
@@ -61,6 +61,18 @@ async def main() -> None:
             print("\nVALIDATION ERRORS:")
             for error in review_result.validation_errors:
                 print(f"- {error}")
+
+    
+    if review_result is not None:
+        if review_result.status == "passed_checks":
+            try:
+                saved_path = save_newsletter(review_result)
+            except (OSError, ValueError) as error:
+                print(f"\nCould not save newsletter: {error}")
+            else:
+                print(f"\nNewsletter saved to: {saved_path.resolve()}")
+        else:
+            print("\nNewsletter needs review; export skipped.")
 
 
 if __name__ == "__main__":

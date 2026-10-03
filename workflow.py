@@ -2,6 +2,7 @@ from datetime import date
 import json
 from agents import Runner
 from newsletter_review import NewsletterReviewResult, review_newsletter
+from article_collection import collect_articles
 
 from agent_definitions import (
     user_profiler_agent,
@@ -9,9 +10,7 @@ from agent_definitions import (
     news_search_agent,
     summarization_agent,
     newsletter_writer_agent,
-    verification_agent
 )
-from article_fetcher import fetch_articles
 
 from schemas import (
     UserProfile,
@@ -72,7 +71,12 @@ async def run_workflow(
         search_results = search_result.final_output
 
     # 4. Download and extract article content.
-    fetched_articles = await fetch_articles(search_results.articles)
+    search_results, fetched_articles = await collect_articles(
+    search_results=search_results,
+    search_plan=search_plan,
+    profile=profile,
+    current_date=today,
+)
 
     # 5. Summarize each successfully fetched article.
     article_summaries: list[ArticleSummary] = []

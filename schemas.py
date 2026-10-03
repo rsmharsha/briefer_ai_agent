@@ -140,3 +140,65 @@ class Newsletter(BaseModel):
     )
 
 
+class SourceEvidence(BaseModel):
+    url: str = Field(
+        description="The exact URL of a supplied fetched article."
+    )
+
+    quote: str = Field(
+        description="An exact excerpt from that article's content."
+    )
+
+
+class ClaimVerification(BaseModel):
+    location: str = Field(
+        description=(
+            "The newsletter field containing the claim, "
+            "such as introduction or sections[0].body."
+        )
+    )
+
+    claim: str = Field(
+        description="An exact excerpt from the newsletter containing a factual claim."
+    )
+
+    status: Literal[
+        "supported",
+        "unsupported",
+        "contradicted",
+        "not_a_claim",
+    ] = Field(
+        description=(
+            "Whether an article-based factual claim is supported, "
+            "unsupported, or contradicted; or whether the excerpt "
+            "is an editorial label rather than a factual claim."
+        )
+    )
+
+    evidence: list[SourceEvidence] = Field(
+        description=(
+            "Source excerpts used to assess the claim. "
+            "Return an empty list when no relevant evidence is available."
+        )
+    )
+
+    explanation: str = Field(
+        description="A brief explanation of the verification result."
+    )
+
+    suggested_revision: str | None = Field(
+        description=(
+            "An evidence-backed replacement for a problematic claim. "
+            "Return null if no correction is needed or the claim "
+            "should be removed because no supported replacement exists."
+        )
+    )
+
+
+class VerificationReport(BaseModel):
+    checks: list[ClaimVerification] = Field(
+        description=(
+            "Checks covering every factual claim in the newsletter, "
+            "including claims in its title, introduction, and sections."
+        )
+    )

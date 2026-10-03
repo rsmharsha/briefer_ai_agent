@@ -8,16 +8,19 @@ from agent_definitions import (
     planner_agent,
     news_search_agent,
     summarization_agent,
-    newsletter_writer_agent
+    newsletter_writer_agent,
+    verification_agent
 )
 from article_fetcher import fetch_articles
+
 from schemas import (
     UserProfile,
     SearchPlan,
     NewsSearchResults,
     FetchedArticle,
     ArticleSummary,
-    Newsletter
+    Newsletter,
+    VerificationReport
 )
 
 
@@ -30,6 +33,7 @@ async def run_workflow(
     list[FetchedArticle],
     list[ArticleSummary],
     Newsletter | None,
+    VerificationReport | None
 ]:
     # 1. Create the user profile.
     profiler_result = await Runner.run(
@@ -117,11 +121,40 @@ async def run_workflow(
 
         newsletter = writer_result.final_output
 
+        # 7. Verify the draft against the fetched article content.
+    verification_report: VerificationReport | None = None
+
+    if newsletter is not None:
+        verification_input = json.dumps(
+            {
+                "current_date": today,
+                "newsletter": newsletter.model_dump(),
+                "fetched_articles": [
+                    {
+                        "title": article.title,
+                        "url": article.url,
+                        "published_date": article.published_date,
+                        "content": article.content,
+                    }
+                    for article in fetched_articles
+                ],
+            },
+            ensure_ascii=False,
+        )
+
+        verification_result = await Runner.run(
+            verification_agent,
+            input=verification_input,
+        )
+
+        verification_report = verification_result.final_output
+
     return (
         profile,
         search_plan,
         search_results,
         fetched_articles,
         article_summaries,
-        newsletter
+        newsletter,
+        verification_report
     )

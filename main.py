@@ -1,6 +1,6 @@
 import asyncio
-
 from workflow import run_workflow
+from verification_utils import validate_evidence
 
 
 async def main() -> None:
@@ -8,7 +8,7 @@ async def main() -> None:
         "Describe your newsletter preferences: "
     )
 
-    profile, search_plan, search_results, fetched_articles, article_summaries, newsletter = await run_workflow(user_description)
+    profile, search_plan, search_results, fetched_articles, article_summaries, newsletter, verification_report = await run_workflow(user_description)
 
     print("\nUSER PROFILE:")
     print(profile.model_dump_json(indent=2))
@@ -43,6 +43,34 @@ async def main() -> None:
         print("No usable article summaries were available.")
     else:
         print(newsletter.model_dump_json(indent=2))
+
+    print("\nVERIFICATION REPORT:")
+
+    if verification_report is None:
+        print("No newsletter draft was available to verify.")
+    else:
+        print(verification_report.model_dump_json(indent=2))
+
+        flagged_count = sum(
+            check.status in {"unsupported", "contradicted"}
+            for check in verification_report.checks
+        )
+
+        print(f"\nClaims checked: {len(verification_report.checks)}")
+        print(f"Claims flagged: {flagged_count}")
+
+        # Add the evidence validation here.
+        evidence_errors = validate_evidence(
+            verification_report,
+            fetched_articles,
+        )
+
+        if evidence_errors:
+            print("\nEVIDENCE VALIDATION ERRORS:")
+            for error in evidence_errors:
+                print(f"- {error}")
+        else:
+            print("\nEvidence quotes match the fetched source text.")
 
 
 if __name__ == "__main__":

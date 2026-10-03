@@ -96,6 +96,9 @@ Rules:
 12. Find article candidates; do not write the newsletter.
 
 Return the result using the provided NewsSearchResults schema.
+Return direct article or announcement URLs.
+Exclude documentation indexes, archive pages, homepages,
+and search-results pages.
 """
 
 

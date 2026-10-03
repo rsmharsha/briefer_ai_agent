@@ -8,7 +8,7 @@ async def main() -> None:
         "Describe your newsletter preferences: "
     )
 
-    profile, search_plan, search_results, fetched_articles, article_summaries, newsletter, verification_report = await run_workflow(user_description)
+    profile, search_plan, search_results, fetched_articles, article_summaries, newsletter, review_result, = await run_workflow(user_description)
 
     print("\nUSER PROFILE:")
     print(profile.model_dump_json(indent=2))
@@ -44,33 +44,23 @@ async def main() -> None:
     else:
         print(newsletter.model_dump_json(indent=2))
 
-    print("\nVERIFICATION REPORT:")
+    print("\nNEWSLETTER REVIEW:")
 
-    if verification_report is None:
-        print("No newsletter draft was available to verify.")
+    if review_result is None:
+        print("No newsletter was available to review.")
     else:
-        print(verification_report.model_dump_json(indent=2))
+        print(f"Status: {review_result.status}")
+        print(f"Revisions used: {review_result.revisions_used}")
 
-        flagged_count = sum(
-            check.status in {"unsupported", "contradicted"}
-            for check in verification_report.checks
+        print("\nVERIFICATION REPORT:")
+        print(
+            review_result.verification_report.model_dump_json(indent=2)
         )
 
-        print(f"\nClaims checked: {len(verification_report.checks)}")
-        print(f"Claims flagged: {flagged_count}")
-
-        # Add the evidence validation here.
-        evidence_errors = validate_evidence(
-            verification_report,
-            fetched_articles,
-        )
-
-        if evidence_errors:
-            print("\nEVIDENCE VALIDATION ERRORS:")
-            for error in evidence_errors:
+        if review_result.validation_errors:
+            print("\nVALIDATION ERRORS:")
+            for error in review_result.validation_errors:
                 print(f"- {error}")
-        else:
-            print("\nEvidence quotes match the fetched source text.")
 
 
 if __name__ == "__main__":

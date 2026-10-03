@@ -1,7 +1,7 @@
 from datetime import date
 import json
-
 from agents import Runner
+from newsletter_review import NewsletterReviewResult, review_newsletter
 
 from agent_definitions import (
     user_profiler_agent,
@@ -33,7 +33,7 @@ async def run_workflow(
     list[FetchedArticle],
     list[ArticleSummary],
     Newsletter | None,
-    VerificationReport | None
+    NewsletterReviewResult | None,
 ]:
     # 1. Create the user profile.
     profiler_result = await Runner.run(
@@ -121,33 +121,19 @@ async def run_workflow(
 
         newsletter = writer_result.final_output
 
-        # 7. Verify the draft against the fetched article content.
-    verification_report: VerificationReport | None = None
+    # 7. Verify and revise the newsletter.
+    review_result: NewsletterReviewResult | None = None
 
     if newsletter is not None:
-        verification_input = json.dumps(
-            {
-                "current_date": today,
-                "newsletter": newsletter.model_dump(),
-                "fetched_articles": [
-                    {
-                        "title": article.title,
-                        "url": article.url,
-                        "published_date": article.published_date,
-                        "content": article.content,
-                    }
-                    for article in fetched_articles
-                ],
-            },
-            ensure_ascii=False,
+
+        review_result = await review_newsletter(
+            newsletter=newsletter,
+            profile=profile,
+            fetched_articles=fetched_articles,
+            current_date=today,
         )
 
-        verification_result = await Runner.run(
-            verification_agent,
-            input=verification_input,
-        )
-
-        verification_report = verification_result.final_output
+        newsletter = review_result.newsletter
 
     return (
         profile,
@@ -156,5 +142,5 @@ async def run_workflow(
         fetched_articles,
         article_summaries,
         newsletter,
-        verification_report
+        review_result,
     )

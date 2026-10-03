@@ -2,15 +2,19 @@ from datetime import date
 
 from agents import Runner
 
-from agent_definitions import user_profiler_agent, planner_agent
-from schemas import UserProfile, SearchPlan
+from agent_definitions import (
+    user_profiler_agent,
+    planner_agent,
+    news_search_agent,
+)
+from schemas import UserProfile, SearchPlan, NewsSearchResults
 
 
 async def run_workflow(
     user_description: str,
-) -> tuple[UserProfile, SearchPlan]:
+) -> tuple[UserProfile, SearchPlan, NewsSearchResults]:
 
-    # Run the profiler.
+    # 1. Create the user profile.
     profiler_result = await Runner.run(
         user_profiler_agent,
         input=user_description,
@@ -18,7 +22,7 @@ async def run_workflow(
 
     profile: UserProfile = profiler_result.final_output
 
-    # Prepare the planner's input.
+    # 2. Create the search plan.
     today = date.today().isoformat()
 
     planner_input = (
@@ -26,7 +30,6 @@ async def run_workflow(
         f"User profile:\n{profile.model_dump_json()}"
     )
 
-    # Run the planner.
     planner_result = await Runner.run(
         planner_agent,
         input=planner_input,
@@ -34,4 +37,20 @@ async def run_workflow(
 
     search_plan: SearchPlan = planner_result.final_output
 
-    return profile, search_plan
+    # 3. Search for article candidates.
+    search_results = NewsSearchResults(articles=[])
+
+    if search_plan.search_queries and search_plan.max_articles > 0:
+        search_input = (
+            f"Current date: {today}\n\n"
+            f"Search plan:\n{search_plan.model_dump_json()}"
+        )
+
+        search_result = await Runner.run(
+            news_search_agent,
+            input=search_input,
+        )
+
+        search_results = search_result.final_output
+
+    return profile, search_plan, search_results

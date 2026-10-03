@@ -40,3 +40,33 @@ class SearchPlan(BaseModel):
     section_titles: list[str] = Field(
         description="Newsletter section titles suited to the user's interests."
     )
+
+
+class ArticleCandidate(BaseModel):
+    title: str = Field(
+        description="The article title found in the search results."
+    )
+
+    url: str = Field(
+        description="The source URL for the article."
+    )
+
+    snippet: str = Field(
+        description="A brief preview based on the search results."
+    )
+
+    published_date: str | None = Field(
+        description=(
+            "Publication date in YYYY-MM-DD format when provided "
+            "by the source. Otherwise, null. Do not guess."
+        )
+    )
+
+
+class NewsSearchResults(BaseModel):
+    articles: list[ArticleCandidate] = Field(
+        description=(
+            "Unique, relevant article candidates found through web search. "
+            "Return an empty list if no suitable articles are found."
+        )
+    )
